@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Trading Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .market {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .color-card {
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .color-preview {
+            width: 100%;
+            height: 80px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .color-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .color-price {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .inventory {
+            margin-top: 30px;
+        }
+        
+        .inventory h2 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .inventory-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .sell {
+            background-color: #e74c3c;
+        }
+        
+        .sell:hover {
+            background-color: #c0392b;
+        }
+        
+        .buy {
+            background-color: #2ecc71;
+        }
+        
+        .buy:hover {
+            background-color: #27ae60;
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .next-day {
+            background-color: #9b59b6;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .next-day:hover {
+            background-color: #8e44ad;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Color Trading Game</h1>
+        
+        <div class="stats">
+            <div class="stat">
+                <div>Day</div>
+                <div class="stat-value" id="day">1</div>
+            </div>
+            <div class="stat">
+                <div>Balance</div>
+                <div class="stat-value" id="balance">$1000</div>
+            </div>
+            <div class="stat">
+                <div>Net Worth</div>
+                <div class="stat-value" id="net-worth">$1000</div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <h2>Market</h2>
+        <div class="market" id="market"></div>
+        
+        <button class="next-day" id="next-day">Next Day</button>
+        
+        <div class="inventory">
+            <h2>Your Inventory</h2>
+            <div class="inventory-items" id="inventory"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const state = {
+            day: 1,
+            balance: 1000,
+            inventory: [],
+            colors: [
+                { name: "Red", basePrice: 100, hex: "#ff0000" },
+                { name: "Green", basePrice: 120, hex: "#00ff00" },
+                { name: "Blue", basePrice: 150, hex: "#0000ff" },
+                { name: "Yellow", basePrice: 80, hex: "#ffff00" },
+                { name: "Purple", basePrice: 200, hex: "#800080" },
+                { name: "Orange", basePrice: 90, hex: "#ffa500" },
+                { name: "Pink", basePrice: 180, hex: "#ffc0cb" },
+                { name: "Cyan", basePrice: 130, hex: "#00ffff" },
+                { name: "Brown", basePrice: 70, hex: "#a52a2a" },
+                { name: "Gray", basePrice: 60, hex: "#808080" }
+            ],
+            marketPrices: {}
+        };
+
+        // Initialize the game
+        function initGame() {
+            generateMarketPrices();
+            renderGame();
+        }
+
+        // Generate random prices for the market
+        function generateMarketPrices() {
+            state.colors.forEach(color => {
+                // Price fluctuates between 70% and 130% of base price
+                const fluctuation = 0.3 * Math.random() + 0.7;
+                state.marketPrices[color.name] = Math.round(color.basePrice * fluctuation);
+            });
+        }
+
+        // Buy a color
+        function buyColor(colorName) {
+            const price = state.marketPrices[colorName];
+            
+            if (state.balance >= price) {
+                state.balance -= price;
+                
+                // Check if player already has this color
+                const existingItem = state.inventory.find(item => item.name === colorName);
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    state.inventory.push({
+                        name: colorName,
+                        quantity: 1,
+                        hex: state.colors.find(c => c.name === colorName).hex
+                    });
+                }
+                
+                showMessage(`You bought ${colorName} for $${price}`, 'success');
+                renderGame();
+            } else {
+                showMessage("Not enough money to buy this color!", 'error');
+            }
+        }
+
+        // Sell a color
+        function sellColor(colorName) {
+            const itemIndex = state.inventory.findIndex(item => item.name === colorName);
+            
+            if (itemIndex !== -1) {
+                const item = state.inventory[itemIndex];
+                const price = state.marketPrices[colorName];
+                
+                state.balance += price;
+                item.quantity--;
+                
+                if (item.quantity === 0) {
+                    state.inventory.splice(itemIndex, 1);
+                }
+                
+                showMessage(`You sold ${colorName} for $${price}`, 'success');
+                renderGame();
+            } else {
+                showMessage("You don't have this color to sell!", 'error');
+            }
+        }
+
+        // Advance to the next day
+        function nextDay() {
+            state.day++;
+            generateMarketPrices();
+            
+            // Random event chance (20%)
+            if (Math.random() < 0.2) {
+                triggerRandomEvent();
+            }
+            
+            renderGame();
+        }
+
+        // Random events that can happen
+        function triggerRandomEvent() {
+            const events = [
+                {
+                    name: "Color Boom",
+                    effect: () => {
+                        // Increase prices of 2 random colors
+                        const randomColors = [...state.colors].sort(() => 0.5 - Math.random()).slice(0, 2);
+                        randomColors.forEach(color => {
+                            state.marketPrices[color.name] = Math.round(state.marketPrices[color.name] * 1.5);
+                        });
+                        return `Market boom! ${randomColors[0].name} and ${randomColors[1].name} prices increased!`;
+                    }
+                },
+                {
+                    name: "Color Crash",
+                    effect: () => {
+                        // Decrease prices of 2 random colors
+                        const randomColors = [...state.colors].sort(() => 0.5 - Math.random()).slice(0, 2);
+                        randomColors.forEach(color => {
+                            state.marketPrices[color.name] = Math.round(state.marketPrices[color.name] * 0.7);
+                        });
+                        return `Market crash! ${randomColors[0].name} and ${randomColors[1].name} prices dropped!`;
+                    }
+                },
+                {
+                    name: "Bonus Cash",
+                    effect: () => {
+                        const bonus = Math.round(100 + Math.random() * 200);
+                        state.balance += bonus;
+                        return `You received a bonus of $${bonus}!`;
+                    }
+                },
+                {
+                    name: "Color Discovery",
+                    effect: () => {
+                        // Add a new random color to the market
+                        const newColors = [
+                            { name: "Gold", basePrice: 300, hex: "#ffd700" },
+                            { name: "Silver", basePrice: 250, hex: "#c0c0c0" },
+                            { name: "Emerald", basePrice: 350, hex: "#50c878" },
+                            { name: "Ruby", basePrice: 400, hex: "#e0115f" }
+                        ].filter(c => !state.colors.some(existing => existing.name === c.name));
+                        
+                        if (newColors.length > 0) {
+                            const newColor = newColors[Math.floor(Math.random() * newColors.length)];
+                            state.colors.push(newColor);
+                            state.marketPrices[newColor.name] = newColor.basePrice;
+                            return `A new color discovered: ${newColor.name}! Now available in the market.`;
+                        }
+                        return "Nothing special happened today.";
+                    }
+                }
+            ];
+            
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            const message = randomEvent.effect();
+            showMessage(`Event: ${message}`, 'success');
+        }
+
+        // Show a message to the player
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // Calculate net worth
+        function calculateNetWorth() {
+            let inventoryValue = 0;
+            state.inventory.forEach(item => {
+                inventoryValue += state.marketPrices[item.name] * item.quantity;
+            });
+            return state.balance + inventoryValue;
+        }
+
+        // Render the game UI
+        function renderGame() {
+            // Update stats
+            document.getElementById('day').textContent = state.day;
+            document.getElementById('balance').textContent = `$${state.balance}`;
+            document.getElementById('net-worth').textContent = `$${calculateNetWorth()}`;
+            
+            // Render market
+            const marketEl = document.getElementById('market');
+            marketEl.innerHTML = '';
+            
+            state.colors.forEach(color => {
+                const colorEl = document.createElement('div');
+                colorEl.className = 'color-card';
+                colorEl.innerHTML = `
+                    <div class="color-preview" style="background-color: ${color.hex}"></div>
+                    <div class="color-name">${color.name}</div>
+                    <div class="color-price">$${state.marketPrices[color.name]}</div>
+                    <button class="buy" onclick="buyColor('${color.name}')">Buy</button>
+                `;
+                marketEl.appendChild(colorEl);
+            });
+            
+            // Render inventory
+            const inventoryEl = document.getElementById('inventory');
+            inventoryEl.innerHTML = '';
+            
+            if (state.inventory.length === 0) {
+                inventoryEl.innerHTML = '<p>Your inventory is empty. Buy some colors!</p>';
+            } else {
+                state.inventory.forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'color-card';
+                    itemEl.innerHTML = `
+                        <div class="color-preview" style="background-color: ${item.hex}"></div>
+                        <div class="color-name">${item.name}</div>
+                        <div class="color-price">$${state.marketPrices[item.name]} each</div>
+                        <div>Qty: ${item.quantity}</div>
+                        <div class="action-buttons">
+                            <button class="sell" onclick="sellColor('${item.name}')">Sell 1</button>
+                            <button class="sell" onclick="sellAll('${item.name}')">Sell All</button>
+                        </div>
+                    `;
+                    inventoryEl.appendChild(itemEl);
+                });
+            }
+        }
+
+        // Sell all of a color
+        function sellAll(colorName) {
+            const itemIndex = state.inventory.findIndex(item => item.name === colorName);
+            
+            if (itemIndex !== -1) {
+                const item = state.inventory[itemIndex];
+                const price = state.marketPrices[colorName] * item.quantity;
+                
+                state.balance += price;
+                state.inventory.splice(itemIndex, 1);
+                
+                showMessage(`You sold all ${item.quantity} ${colorName} for $${price}`, 'success');
+                renderGame();
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.onload = initGame;
+
+        // Make functions available globally
+        window.buyColor = buyColor;
+        window.sellColor = sellColor;
+        window.sellAll = sellAll;
+        window.nextDay = nextDay;
+    </script>
+</body>
+</html>
