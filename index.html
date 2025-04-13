@@ -3,455 +3,373 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Trading Game</title>
+    <title>UPI Payment Gateway</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f0f0;
+        :root {
+            --primary-color: #5e35b1;
+            --secondary-color: #7c4dff;
+            --accent-color: #ff4081;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .payment-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .payment-header h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .payment-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .payment-body {
+            padding: 25px;
+        }
+
+        .amount-display {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .amount-label {
+            font-size: 14px;
+            color: var(--dark-color);
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .amount-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .qr-container {
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-bottom: 25px;
+            position: relative;
         }
-        
-        .game-container {
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 90%;
-            max-width: 800px;
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8f8f8;
-            border-radius: 8px;
-        }
-        
-        .stat {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .market {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .color-card {
-            border-radius: 8px;
             padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .color-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .color-preview {
-            width: 100%;
-            height: 80px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .color-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .color-price {
-            color: #27ae60;
-            font-weight: bold;
-        }
-        
-        .inventory {
-            margin-top: 30px;
-        }
-        
-        .inventory h2 {
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .inventory-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .action-buttons {
+            border-radius: 8px;
+            margin-bottom: 15px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .qr-code img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .timer {
+            background-color: var(--warning-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .timer i {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        .upi-id {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 15px;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background-color: var(--light-color);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .instructions {
+            font-size: 13px;
+            color: var(--dark-color);
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
             margin-top: 10px;
         }
-        
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+
+        .instructions li {
+            margin-bottom: 8px;
         }
-        
-        button:hover {
-            background-color: #2980b9;
-        }
-        
-        .sell {
-            background-color: #e74c3c;
-        }
-        
-        .sell:hover {
-            background-color: #c0392b;
-        }
-        
-        .buy {
-            background-color: #2ecc71;
-        }
-        
-        .buy:hover {
-            background-color: #27ae60;
-        }
-        
-        .message {
+
+        .payment-options {
+            display: flex;
+            justify-content: space-between;
             margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-btn i {
+            margin-right: 8px;
+        }
+
+        .cancel-btn {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            margin-right: 10px;
+        }
+
+        .cancel-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .help-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .help-btn:hover {
+            background-color: #f3f0ff;
+        }
+
+        .status-message {
             text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--success-color);
+            font-weight: 500;
             display: none;
         }
-        
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .next-day {
-            background-color: #9b59b6;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 20px;
-            width: 100%;
-        }
-        
-        .next-day:hover {
-            background-color: #8e44ad;
+
+        @media (max-width: 480px) {
+            .payment-body {
+                padding: 20px;
+            }
+            
+            .qr-code {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .payment-options {
+                flex-direction: column;
+            }
+            
+            .cancel-btn {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="game-container">
-        <h1>Color Trading Game</h1>
-        
-        <div class="stats">
-            <div class="stat">
-                <div>Day</div>
-                <div class="stat-value" id="day">1</div>
-            </div>
-            <div class="stat">
-                <div>Balance</div>
-                <div class="stat-value" id="balance">$1000</div>
-            </div>
-            <div class="stat">
-                <div>Net Worth</div>
-                <div class="stat-value" id="net-worth">$1000</div>
-            </div>
+    <div class="payment-container">
+        <div class="payment-header">
+            <h2>UPI Payment</h2>
+            <p>Scan the QR code to complete your payment</p>
         </div>
         
-        <div class="message" id="message"></div>
-        
-        <h2>Market</h2>
-        <div class="market" id="market"></div>
-        
-        <button class="next-day" id="next-day">Next Day</button>
-        
-        <div class="inventory">
-            <h2>Your Inventory</h2>
-            <div class="inventory-items" id="inventory"></div>
+        <div class="payment-body">
+            <div class="amount-display">
+                <div class="amount-label">Amount to pay</div>
+                <div class="amount-value">₹1,299.00</div>
+            </div>
+            
+            <div class="qr-container">
+                <div class="timer">
+                    <i class="fas fa-clock"></i>
+                    <span id="countdown">04:59</span>
+                </div>
+                
+                <div class="qr-code">
+                    <!-- In a real implementation, you would use a real QR code image -->
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=merchant@upi&pn=Merchant%20Name&am=1299.00&tn=Payment%20for%20Order%20XYZ123" alt="UPI QR Code">
+                </div>
+                
+                <div class="upi-id">
+                    merchant@upi
+                    <button class="copy-btn" onclick="copyUPI()">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <p>How to pay with UPI:</p>
+                <ol>
+                    <li>Open any UPI app on your phone</li>
+                    <li>Tap on 'Scan QR Code' and scan this code</li>
+                    <li>Enter your UPI PIN to complete payment</li>
+                    <li>Payment will be processed automatically</li>
+                </ol>
+            </div>
+            
+            <div class="status-message" id="statusMessage">
+                <i class="fas fa-check-circle"></i> Payment received! Redirecting...
+            </div>
+            
+            <div class="payment-options">
+                <button class="option-btn cancel-btn" onclick="cancelPayment()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="option-btn help-btn" onclick="showHelp()">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Game state
-        const state = {
-            day: 1,
-            balance: 1000,
-            inventory: [],
-            colors: [
-                { name: "Red", basePrice: 100, hex: "#ff0000" },
-                { name: "Green", basePrice: 120, hex: "#00ff00" },
-                { name: "Blue", basePrice: 150, hex: "#0000ff" },
-                { name: "Yellow", basePrice: 80, hex: "#ffff00" },
-                { name: "Purple", basePrice: 200, hex: "#800080" },
-                { name: "Orange", basePrice: 90, hex: "#ffa500" },
-                { name: "Pink", basePrice: 180, hex: "#ffc0cb" },
-                { name: "Cyan", basePrice: 130, hex: "#00ffff" },
-                { name: "Brown", basePrice: 70, hex: "#a52a2a" },
-                { name: "Gray", basePrice: 60, hex: "#808080" }
-            ],
-            marketPrices: {}
-        };
-
-        // Initialize the game
-        function initGame() {
-            generateMarketPrices();
-            renderGame();
+        // Timer functionality
+        let timeLeft = 299; // 4 minutes 59 seconds in seconds
+        const countdownElement = document.getElementById('countdown');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                countdownElement.textContent = "Expired";
+                document.querySelector('.timer').style.backgroundColor = var(--error-color);
+                // In a real implementation, you would handle the expired payment
+            } else {
+                timeLeft--;
+            }
         }
-
-        // Generate random prices for the market
-        function generateMarketPrices() {
-            state.colors.forEach(color => {
-                // Price fluctuates between 70% and 130% of base price
-                const fluctuation = 0.3 * Math.random() + 0.7;
-                state.marketPrices[color.name] = Math.round(color.basePrice * fluctuation);
+        
+        const timerInterval = setInterval(updateTimer, 1000);
+        
+        // Copy UPI ID function
+        function copyUPI() {
+            const upiId = 'merchant@upi';
+            navigator.clipboard.writeText(upiId).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="far fa-copy"></i> Copy';
+                }, 2000);
             });
         }
-
-        // Buy a color
-        function buyColor(colorName) {
-            const price = state.marketPrices[colorName];
+        
+        // Simulate payment success (for demo purposes)
+        function simulatePaymentSuccess() {
+            document.getElementById('statusMessage').style.display = 'block';
+            document.querySelector('.timer').style.backgroundColor = var(--success-color);
+            clearInterval(timerInterval);
             
-            if (state.balance >= price) {
-                state.balance -= price;
-                
-                // Check if player already has this color
-                const existingItem = state.inventory.find(item => item.name === colorName);
-                if (existingItem) {
-                    existingItem.quantity++;
-                } else {
-                    state.inventory.push({
-                        name: colorName,
-                        quantity: 1,
-                        hex: state.colors.find(c => c.name === colorName).hex
-                    });
-                }
-                
-                showMessage(`You bought ${colorName} for $${price}`, 'success');
-                renderGame();
-            } else {
-                showMessage("Not enough money to buy this color!", 'error');
-            }
-        }
-
-        // Sell a color
-        function sellColor(colorName) {
-            const itemIndex = state.inventory.findIndex(item => item.name === colorName);
-            
-            if (itemIndex !== -1) {
-                const item = state.inventory[itemIndex];
-                const price = state.marketPrices[colorName];
-                
-                state.balance += price;
-                item.quantity--;
-                
-                if (item.quantity === 0) {
-                    state.inventory.splice(itemIndex, 1);
-                }
-                
-                showMessage(`You sold ${colorName} for $${price}`, 'success');
-                renderGame();
-            } else {
-                showMessage("You don't have this color to sell!", 'error');
-            }
-        }
-
-        // Advance to the next day
-        function nextDay() {
-            state.day++;
-            generateMarketPrices();
-            
-            // Random event chance (20%)
-            if (Math.random() < 0.2) {
-                triggerRandomEvent();
-            }
-            
-            renderGame();
-        }
-
-        // Random events that can happen
-        function triggerRandomEvent() {
-            const events = [
-                {
-                    name: "Color Boom",
-                    effect: () => {
-                        // Increase prices of 2 random colors
-                        const randomColors = [...state.colors].sort(() => 0.5 - Math.random()).slice(0, 2);
-                        randomColors.forEach(color => {
-                            state.marketPrices[color.name] = Math.round(state.marketPrices[color.name] * 1.5);
-                        });
-                        return `Market boom! ${randomColors[0].name} and ${randomColors[1].name} prices increased!`;
-                    }
-                },
-                {
-                    name: "Color Crash",
-                    effect: () => {
-                        // Decrease prices of 2 random colors
-                        const randomColors = [...state.colors].sort(() => 0.5 - Math.random()).slice(0, 2);
-                        randomColors.forEach(color => {
-                            state.marketPrices[color.name] = Math.round(state.marketPrices[color.name] * 0.7);
-                        });
-                        return `Market crash! ${randomColors[0].name} and ${randomColors[1].name} prices dropped!`;
-                    }
-                },
-                {
-                    name: "Bonus Cash",
-                    effect: () => {
-                        const bonus = Math.round(100 + Math.random() * 200);
-                        state.balance += bonus;
-                        return `You received a bonus of $${bonus}!`;
-                    }
-                },
-                {
-                    name: "Color Discovery",
-                    effect: () => {
-                        // Add a new random color to the market
-                        const newColors = [
-                            { name: "Gold", basePrice: 300, hex: "#ffd700" },
-                            { name: "Silver", basePrice: 250, hex: "#c0c0c0" },
-                            { name: "Emerald", basePrice: 350, hex: "#50c878" },
-                            { name: "Ruby", basePrice: 400, hex: "#e0115f" }
-                        ].filter(c => !state.colors.some(existing => existing.name === c.name));
-                        
-                        if (newColors.length > 0) {
-                            const newColor = newColors[Math.floor(Math.random() * newColors.length)];
-                            state.colors.push(newColor);
-                            state.marketPrices[newColor.name] = newColor.basePrice;
-                            return `A new color discovered: ${newColor.name}! Now available in the market.`;
-                        }
-                        return "Nothing special happened today.";
-                    }
-                }
-            ];
-            
-            const randomEvent = events[Math.floor(Math.random() * events.length)];
-            const message = randomEvent.effect();
-            showMessage(`Event: ${message}`, 'success');
-        }
-
-        // Show a message to the player
-        function showMessage(text, type) {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            messageEl.className = `message ${type}`;
-            messageEl.style.display = 'block';
-            
+            // In a real implementation, you would verify the payment with your backend
             setTimeout(() => {
-                messageEl.style.display = 'none';
-            }, 3000);
+                alert('Payment successful! Thank you for your purchase.');
+            }, 2000);
         }
-
-        // Calculate net worth
-        function calculateNetWorth() {
-            let inventoryValue = 0;
-            state.inventory.forEach(item => {
-                inventoryValue += state.marketPrices[item.name] * item.quantity;
-            });
-            return state.balance + inventoryValue;
-        }
-
-        // Render the game UI
-        function renderGame() {
-            // Update stats
-            document.getElementById('day').textContent = state.day;
-            document.getElementById('balance').textContent = `$${state.balance}`;
-            document.getElementById('net-worth').textContent = `$${calculateNetWorth()}`;
-            
-            // Render market
-            const marketEl = document.getElementById('market');
-            marketEl.innerHTML = '';
-            
-            state.colors.forEach(color => {
-                const colorEl = document.createElement('div');
-                colorEl.className = 'color-card';
-                colorEl.innerHTML = `
-                    <div class="color-preview" style="background-color: ${color.hex}"></div>
-                    <div class="color-name">${color.name}</div>
-                    <div class="color-price">$${state.marketPrices[color.name]}</div>
-                    <button class="buy" onclick="buyColor('${color.name}')">Buy</button>
-                `;
-                marketEl.appendChild(colorEl);
-            });
-            
-            // Render inventory
-            const inventoryEl = document.getElementById('inventory');
-            inventoryEl.innerHTML = '';
-            
-            if (state.inventory.length === 0) {
-                inventoryEl.innerHTML = '<p>Your inventory is empty. Buy some colors!</p>';
-            } else {
-                state.inventory.forEach(item => {
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'color-card';
-                    itemEl.innerHTML = `
-                        <div class="color-preview" style="background-color: ${item.hex}"></div>
-                        <div class="color-name">${item.name}</div>
-                        <div class="color-price">$${state.marketPrices[item.name]} each</div>
-                        <div>Qty: ${item.quantity}</div>
-                        <div class="action-buttons">
-                            <button class="sell" onclick="sellColor('${item.name}')">Sell 1</button>
-                            <button class="sell" onclick="sellAll('${item.name}')">Sell All</button>
-                        </div>
-                    `;
-                    inventoryEl.appendChild(itemEl);
-                });
+        
+        // For demo: Allow clicking the QR to simulate payment
+        document.querySelector('.qr-code').addEventListener('click', simulatePaymentSuccess);
+        
+        // Button functions
+        function cancelPayment() {
+            if (confirm('Are you sure you want to cancel this payment?')) {
+                alert('Payment cancelled. You will be redirected back.');
+                // In a real implementation, you would handle the cancellation
             }
         }
-
-        // Sell all of a color
-        function sellAll(colorName) {
-            const itemIndex = state.inventory.findIndex(item => item.name === colorName);
-            
-            if (itemIndex !== -1) {
-                const item = state.inventory[itemIndex];
-                const price = state.marketPrices[colorName] * item.quantity;
-                
-                state.balance += price;
-                state.inventory.splice(itemIndex, 1);
-                
-                showMessage(`You sold all ${item.quantity} ${colorName} for $${price}`, 'success');
-                renderGame();
-            }
+        
+        function showHelp() {
+            alert('For assistance, please contact our customer support at support@example.com or call +91 9876543210.');
         }
-
-        // Initialize the game when the page loads
-        window.onload = initGame;
-
-        // Make functions available globally
-        window.buyColor = buyColor;
-        window.sellColor = sellColor;
-        window.sellAll = sellAll;
-        window.nextDay = nextDay;
     </script>
 </body>
 </html>
