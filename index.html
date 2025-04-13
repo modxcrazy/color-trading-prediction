@@ -230,6 +230,21 @@
             display: none;
         }
 
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 480px) {
             .payment-body {
                 padding: 20px;
@@ -251,6 +266,9 @@
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="payment-container">
@@ -262,22 +280,21 @@
         <div class="payment-body">
             <div class="amount-display">
                 <div class="amount-label">Amount to pay</div>
-                <div class="amount-value">₹1,299.00</div>
+                <div class="amount-value" id="amountValue">₹<span id="amount">--</span></div>
             </div>
             
             <div class="qr-container">
                 <div class="timer">
                     <i class="fas fa-clock"></i>
-                    <span id="countdown">04:59</span>
+                    <span id="countdown">--:--</span>
                 </div>
                 
                 <div class="qr-code">
-                    <!-- In a real implementation, you would use a real QR code image -->
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=merchant@upi&pn=Merchant%20Name&am=1299.00&tn=Payment%20for%20Order%20XYZ123" alt="UPI QR Code">
+                    <img id="qrImage" src="" alt="UPI QR Code">
                 </div>
                 
-                <div class="upi-id">
-                    merchant@upi
+                <div class="upi-id" id="upiIdContainer">
+                    <span id="upiId">Loading...</span>
                     <button class="copy-btn" onclick="copyUPI()">
                         <i class="far fa-copy"></i> Copy
                     </button>
@@ -310,32 +327,106 @@
     </div>
 
     <script>
-        // Timer functionality
-        let timeLeft = 299; // 4 minutes 59 seconds in seconds
+        // Firebase configuration (replace with your actual config)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Reference to your payment data in Firebase
+        // This assumes you have a structure like:
+        // payments
+        //   - currentPayment
+        //     - amount: 1299
+        //     - upiId: "merchant@upi"
+        //     - expiryTime: 1698765432 (UNIX timestamp)
+        //     - transactionId: "TXN12345"
+        const paymentRef = database.ref('payments/currentPayment');
+
+        // DOM elements
         const countdownElement = document.getElementById('countdown');
-        
-        function updateTimer() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            
-            countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                countdownElement.textContent = "Expired";
-                document.querySelector('.timer').style.backgroundColor = var(--error-color);
-                // In a real implementation, you would handle the expired payment
+        const amountElement = document.getElementById('amount');
+        const upiIdElement = document.getElementById('upiId');
+        const qrImageElement = document.getElementById('qrImage');
+        const statusMessageElement = document.getElementById('statusMessage');
+
+        // Variables
+        let timerInterval;
+        let paymentData = {};
+
+        // Fetch payment data from Firebase
+        paymentRef.on('value', (snapshot) => {
+            paymentData = snapshot.val();
+            if (paymentData) {
+                updatePaymentUI(paymentData);
+                startTimer(paymentData.expiryTime);
             } else {
-                timeLeft--;
+                showError("No active payment found");
             }
+        });
+
+        function updatePaymentUI(data) {
+            // Update amount
+            const formattedAmount = new Intl.NumberFormat('en-IN', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(data.amount);
+            amountElement.textContent = formattedAmount;
+
+            // Update UPI ID
+            upiIdElement.textContent = data.upiId;
+
+            // Generate QR code
+            const qrData = `upi://pay?pa=${encodeURIComponent(data.upiId)}&pn=${encodeURIComponent('Merchant Name')}&am=${data.amount}&tn=${encodeURIComponent(data.transactionId || 'Payment')}`;
+            qrImageElement.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
         }
-        
-        const timerInterval = setInterval(updateTimer, 1000);
-        
+
+        function startTimer(expiryTimestamp) {
+            // Clear existing timer if any
+            if (timerInterval) clearInterval(timerInterval);
+
+            function updateTimerDisplay() {
+                const now = Math.floor(Date.now() / 1000);
+                const timeLeft = expiryTimestamp - now;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    countdownElement.textContent = "Expired";
+                    document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
+                    // Handle expired payment
+                    return;
+                }
+
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                // Change color when less than 1 minute remaining
+                if (timeLeft < 60) {
+                    document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
+                }
+            }
+
+            // Update immediately and then every second
+            updateTimerDisplay();
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+        }
+
         // Copy UPI ID function
         function copyUPI() {
-            const upiId = 'merchant@upi';
-            navigator.clipboard.writeText(upiId).then(() => {
+            if (!paymentData.upiId) return;
+            
+            navigator.clipboard.writeText(paymentData.upiId).then(() => {
                 const copyBtn = document.querySelector('.copy-btn');
                 copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 setTimeout(() => {
@@ -343,11 +434,18 @@
                 }, 2000);
             });
         }
-        
-        // Simulate payment success (for demo purposes)
+
+        // For demo: Allow clicking the QR to simulate payment
+        document.querySelector('.qr-code').addEventListener('click', () => {
+            if (confirm('Simulate successful payment?')) {
+                simulatePaymentSuccess();
+            }
+        });
+
+        // Simulate payment success
         function simulatePaymentSuccess() {
-            document.getElementById('statusMessage').style.display = 'block';
-            document.querySelector('.timer').style.backgroundColor = var(--success-color);
+            statusMessageElement.style.display = 'block';
+            document.querySelector('.timer').style.backgroundColor = 'var(--success-color)';
             clearInterval(timerInterval);
             
             // In a real implementation, you would verify the payment with your backend
@@ -355,10 +453,7 @@
                 alert('Payment successful! Thank you for your purchase.');
             }, 2000);
         }
-        
-        // For demo: Allow clicking the QR to simulate payment
-        document.querySelector('.qr-code').addEventListener('click', simulatePaymentSuccess);
-        
+
         // Button functions
         function cancelPayment() {
             if (confirm('Are you sure you want to cancel this payment?')) {
@@ -366,9 +461,16 @@
                 // In a real implementation, you would handle the cancellation
             }
         }
-        
+
         function showHelp() {
             alert('For assistance, please contact our customer support at support@example.com or call +91 9876543210.');
+        }
+
+        function showError(message) {
+            countdownElement.textContent = "Error";
+            amountElement.textContent = "--";
+            upiIdElement.textContent = message;
+            document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
         }
     </script>
 </body>
