@@ -6,56 +6,85 @@
     <title>UPI Payment Gateway</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+            background-color: #e9ecef;
             margin: 0;
             padding: 0;
         }
 
         .container {
             max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
+            margin: 100px auto;
+            padding: 30px;
             background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
         h1 {
-            text-align: center;
+            color: #343a40;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin: 10px 0 5px;
+            margin: 15px 0 5px;
+            font-weight: bold;
+            color: #495057;
         }
 
         input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-bottom: 20px;
-            border: 1px solid #ccc;
+            border: 1px solid #ced4da;
             border-radius: 5px;
+            font-size: 16px;
         }
 
         button {
             width: 100%;
-            padding: 10px;
-            background-color: #28a745;
+            padding: 12px;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
+            font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
 
         button:hover {
-            background-color: #218838;
+            background-color: #0056b3;
         }
 
         #message {
-            text-align: center;
             margin-top: 20px;
-            color: red;
+            font-size: 16px;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -64,10 +93,10 @@
         <h1>UPI Payment Gateway</h1>
         <form id="payment-form">
             <label for="upi-id">UPI ID:</label>
-            <input type="text" id="upi-id" name="upi-id" required>
+            <input type="text" id="upi-id" name="upi-id" placeholder="Enter your UPI ID" required>
 
             <label for="amount">Amount (INR):</label>
-            <input type="number" id="amount" name="amount" required min="1">
+            <input type="number" id="amount" name="amount" placeholder="Enter amount" required min="1">
 
             <button type="submit">Pay Now</button>
         </form>
@@ -87,11 +116,13 @@
             // Validation
             if (!validateUPI(upiId)) {
                 messageDiv.innerText = 'Invalid UPI ID format. Please enter a valid UPI ID.';
+                messageDiv.className = 'error';
                 return;
             }
 
             if (amount <= 0) {
                 messageDiv.innerText = 'Amount must be greater than zero.';
+                messageDiv.className = 'error';
                 return;
             }
 
@@ -114,10 +145,10 @@
                 const messageDiv = document.getElementById('message');
                 if (isSuccess) {
                     messageDiv.innerText = `Payment of ₹${amount} to ${upiId} was successful!`;
-                    messageDiv.style.color = 'green';
+                    messageDiv.className = 'success';
                 } else {
                     messageDiv.innerText = 'Payment failed. Please try again.';
-                    messageDiv.style.color = 'red';
+                    messageDiv.className = 'error';
                 }
             }, 2000); // Simulate 2 seconds delay
         }
