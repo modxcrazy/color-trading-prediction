@@ -5,7 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UPI Payment Gateway</title>
     <style>
-        /* (Keep all your existing CSS styles) */
+        :root {
+            --primary-color: #5e35b1;
+            --secondary-color: #7c4dff;
+            --accent-color: #ff4081;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .payment-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .payment-header h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .payment-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .payment-body {
+            padding: 25px;
+        }
+
+        .amount-display {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .amount-label {
+            font-size: 14px;
+            color: var(--dark-color);
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .amount-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .qr-container {
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .qr-code img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .timer {
+            background-color: var(--warning-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .timer i {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        .upi-id {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 15px;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background-color: var(--light-color);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .instructions {
+            font-size: 13px;
+            color: var(--dark-color);
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .payment-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-btn i {
+            margin-right: 8px;
+        }
+
+        .cancel-btn {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            margin-right: 10px;
+        }
+
+        .cancel-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .help-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .help-btn:hover {
+            background-color: #f3f0ff;
+        }
+
+        .status-message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--success-color);
+            font-weight: 500;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .payment-body {
+                padding: 20px;
+            }
+            
+            .qr-code {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .payment-options {
+                flex-direction: column;
+            }
+            
+            .cancel-btn {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Firebase SDK -->
@@ -13,26 +271,86 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
 </head>
 <body>
-    <!-- (Keep all your existing HTML structure) -->
+    <div class="payment-container">
+        <div class="payment-header">
+            <h2>UPI Payment</h2>
+            <p>Scan the QR code to complete your payment</p>
+        </div>
+        
+        <div class="payment-body">
+            <div class="amount-display">
+                <div class="amount-label">Amount to pay</div>
+                <div class="amount-value" id="amountValue">₹<span id="amount">--</span></div>
+            </div>
+            
+            <div class="qr-container">
+                <div class="timer">
+                    <i class="fas fa-clock"></i>
+                    <span id="countdown">--:--</span>
+                </div>
+                
+                <div class="qr-code">
+                    <img id="qrImage" src="" alt="UPI QR Code">
+                </div>
+                
+                <div class="upi-id" id="upiIdContainer">
+                    <span id="upiId">Loading...</span>
+                    <button class="copy-btn" onclick="copyUPI()">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <p>How to pay with UPI:</p>
+                <ol>
+                    <li>Open any UPI app on your phone</li>
+                    <li>Tap on 'Scan QR Code' and scan this code</li>
+                    <li>Enter your UPI PIN to complete payment</li>
+                    <li>Payment will be processed automatically</li>
+                </ol>
+            </div>
+            
+            <div class="status-message" id="statusMessage">
+                <i class="fas fa-check-circle"></i> Payment received! Redirecting...
+            </div>
+            
+            <div class="payment-options">
+                <button class="option-btn cancel-btn" onclick="cancelPayment()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="option-btn help-btn" onclick="showHelp()">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration (replace with your actual config)
         const firebaseConfig = {
-            apiKey: "AIzaSyCn553qWsVz2VF1dZ4Ji5OkQDGFvMORbJE",
-            authDomain: "pg-data-ed1c2.firebaseapp.com",
-            databaseURL: "https://pg-data-ed1c2-default-rtdb.firebaseio.com",
-            projectId: "pg-data-ed1c2",
-            storageBucket: "pg-data-ed1c2.firebasestorage.app",
-            messagingSenderId: "884858492190",
-            appId: "1:884858492190:web:67b7606ff790064ef3250f",
-            measurementId: "G-J73RD8EH7W"
-        };
+    apiKey: "AIzaSyCn553qWsVz2VF1dZ4Ji5OkQDGFvMORbJE",
+    authDomain: "pg-data-ed1c2.firebaseapp.com",
+    databaseURL: "https://pg-data-ed1c2-default-rtdb.firebaseio.com",
+    projectId: "pg-data-ed1c2",
+    storageBucket: "pg-data-ed1c2.firebasestorage.app",
+    messagingSenderId: "884858492190",
+    appId: "1:884858492190:web:67b7606ff790064ef3250f",
+    measurementId: "G-J73RD8EH7W"
+  };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Reference to payment data in Firebase
+        // Reference to your payment data in Firebase
+        // This assumes you have a structure like:
+        // payments
+        //   - currentPayment
+        //     - amount: 1299
+        //     - upiId: "merchant@upi"
+        //     - expiryTime: 1698765432 (UNIX timestamp)
+        //     - transactionId: "TXN12345"
         const paymentRef = database.ref('payments/currentPayment');
 
         // DOM elements
@@ -51,24 +369,14 @@
             paymentData = snapshot.val();
             if (paymentData) {
                 updatePaymentUI(paymentData);
-                
-                // Calculate expiry time (createdAt + expiryMinutes)
-                const expiryTime = paymentData.createdAt + (paymentData.expiryMinutes * 60);
-                startTimer(expiryTime);
-                
-                // Check payment status
-                if (paymentData.status === 'paid') {
-                    showPaymentSuccess();
-                } else if (paymentData.status === 'expired') {
-                    showPaymentExpired();
-                }
+                startTimer(paymentData.expiryTime);
             } else {
-                showError("Payment session not found");
+                showError("No active payment found");
             }
         });
 
         function updatePaymentUI(data) {
-            // Update amount with Indian Rupee formatting
+            // Update amount
             const formattedAmount = new Intl.NumberFormat('en-IN', {
                 style: 'decimal',
                 minimumFractionDigits: 2,
@@ -79,17 +387,9 @@
             // Update UPI ID
             upiIdElement.textContent = data.upiId;
 
-            // Generate QR code with UPI payment details
-            const qrData = `upi://pay?pa=${encodeURIComponent(data.upiId)}&pn=${encodeURIComponent('Your Merchant Name')}&am=${data.amount}&tn=${encodeURIComponent(data.transactionId)}&cu=INR`;
+            // Generate QR code
+            const qrData = `upi://pay?pa=${encodeURIComponent(data.upiId)}&pn=${encodeURIComponent('Merchant Name')}&am=${data.amount}&tn=${encodeURIComponent(data.transactionId || 'Payment')}`;
             qrImageElement.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
-            
-            // Show loading until QR loads
-            qrImageElement.onload = () => {
-                document.querySelector('.qr-code').classList.remove('loading');
-            };
-            qrImageElement.onerror = () => {
-                showError("Failed to generate QR code");
-            };
         }
 
         function startTimer(expiryTimestamp) {
@@ -104,9 +404,7 @@
                     clearInterval(timerInterval);
                     countdownElement.textContent = "Expired";
                     document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
-                    
-                    // Update status in Firebase
-                    paymentRef.update({ status: 'expired' });
+                    // Handle expired payment
                     return;
                 }
 
@@ -125,23 +423,6 @@
             timerInterval = setInterval(updateTimerDisplay, 1000);
         }
 
-        function showPaymentSuccess() {
-            statusMessageElement.style.display = 'block';
-            document.querySelector('.timer').style.backgroundColor = 'var(--success-color)';
-            countdownElement.textContent = "Paid";
-            clearInterval(timerInterval);
-            
-            // Disable copy button
-            document.querySelector('.copy-btn').disabled = true;
-        }
-
-        function showPaymentExpired() {
-            clearInterval(timerInterval);
-            countdownElement.textContent = "Expired";
-            document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
-            document.querySelector('.copy-btn').disabled = true;
-        }
-
         // Copy UPI ID function
         function copyUPI() {
             if (!paymentData.upiId) return;
@@ -155,17 +436,30 @@
             });
         }
 
+        // For demo: Allow clicking the QR to simulate payment
+        document.querySelector('.qr-code').addEventListener('click', () => {
+            if (confirm('Simulate successful payment?')) {
+                simulatePaymentSuccess();
+            }
+        });
+
+        // Simulate payment success
+        function simulatePaymentSuccess() {
+            statusMessageElement.style.display = 'block';
+            document.querySelector('.timer').style.backgroundColor = 'var(--success-color)';
+            clearInterval(timerInterval);
+            
+            // In a real implementation, you would verify the payment with your backend
+            setTimeout(() => {
+                alert('Payment successful! Thank you for your purchase.');
+            }, 2000);
+        }
+
         // Button functions
         function cancelPayment() {
             if (confirm('Are you sure you want to cancel this payment?')) {
-                // Update status in Firebase
-                paymentRef.update({ status: 'expired' })
-                    .then(() => {
-                        alert('Payment cancelled. You will be redirected.');
-                    })
-                    .catch((error) => {
-                        alert('Error cancelling payment: ' + error.message);
-                    });
+                alert('Payment cancelled. You will be redirected back.');
+                // In a real implementation, you would handle the cancellation
             }
         }
 
@@ -178,11 +472,7 @@
             amountElement.textContent = "--";
             upiIdElement.textContent = message;
             document.querySelector('.timer').style.backgroundColor = 'var(--error-color)';
-            document.querySelector('.qr-code img').style.display = 'none';
         }
-
-        // Initialize
-        document.querySelector('.qr-code').classList.add('loading');
     </script>
 </body>
 </html>
