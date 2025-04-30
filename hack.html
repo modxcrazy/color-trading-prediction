@@ -341,412 +341,422 @@
     </div>
 
     <script>
-        // Available colors for prediction
-        const colors = [
-            { name: "Red", code: "#FF5252", emoji: "🔴" },
-            { name: "Green", code: "#4CAF50", emoji: "🟢" },
-            { name: "Blue", code: "#2196F3", emoji: "🔵" },
-            { name: "Yellow", code: "#FFD600", emoji: "🟡" },
-            { name: "Purple", code: "#9C27B0", emoji: "🟣" }
-        ];
+    // Available colors for prediction - now only Green, Violet, Red
+    const colors = [
+        { name: "Green", code: "#4CAF50", emoji: "🟢" },
+        { name: "Violet", code: "#9C27B0", emoji: "🟣" },
+        { name: "Red", code: "#FF5252", emoji: "🔴" }
+    ];
+    
+    // Trade history data
+    let tradeHistory = [];
+    
+    // DOM elements
+    const predictBtn = document.getElementById('predictBtn');
+    const predictionValue = document.getElementById('predictionValue');
+    const predictionDisplay = document.getElementById('predictionDisplay');
+    const predictionConfidence = document.getElementById('predictionConfidence');
+    const riskLevel = document.getElementById('riskLevel');
+    const riskValue = document.getElementById('riskValue');
+    const marketSelect = document.getElementById('marketSelect');
+    const historyDepth = document.getElementById('historyDepth');
+    const historyChart = document.getElementById('historyChart');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const accuracyRate = document.getElementById('accuracyRate');
+    const successStreak = document.getElementById('successStreak');
+    const totalPredictions = document.getElementById('totalPredictions');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load any saved history from localStorage
+        loadHistory();
         
-        // Trade history data
-        let tradeHistory = [];
+        // Set up event listeners
+        predictBtn.addEventListener('click', generatePrediction);
+        riskLevel.addEventListener('input', updateRiskValue);
         
-        // DOM elements
-        const predictBtn = document.getElementById('predictBtn');
-        const predictionValue = document.getElementById('predictionValue');
-        const predictionDisplay = document.getElementById('predictionDisplay');
-        const predictionConfidence = document.getElementById('predictionConfidence');
-        const riskLevel = document.getElementById('riskLevel');
-        const riskValue = document.getElementById('riskValue');
-        const marketSelect = document.getElementById('marketSelect');
-        const historyDepth = document.getElementById('historyDepth');
-        const historyChart = document.getElementById('historyChart');
-        const historyTableBody = document.getElementById('historyTableBody');
-        const accuracyRate = document.getElementById('accuracyRate');
-        const successStreak = document.getElementById('successStreak');
-        const totalPredictions = document.getElementById('totalPredictions');
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load any saved history from localStorage
-            loadHistory();
-            
-            // Set up event listeners
-            predictBtn.addEventListener('click', generatePrediction);
-            riskLevel.addEventListener('input', updateRiskValue);
-            
-            // Set up tab switching
-            tabs.forEach(tab => {
-                tab.addEventListener('click', switchTab);
-            });
-            
-            // Generate some initial history if none exists
-            if (tradeHistory.length === 0) {
-                generateInitialHistory();
-            }
-            
-            updateStats();
-            renderChart();
-            renderHistoryTable();
+        // Set up tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', switchTab);
         });
         
-        // Update the displayed risk value
-        function updateRiskValue() {
-            riskValue.textContent = riskLevel.value;
+        // Generate some initial history if none exists
+        if (tradeHistory.length === 0) {
+            generateInitialHistory();
         }
         
-        // Switch between tabs
-        function switchTab(e) {
-            const tabId = e.target.getAttribute('data-tab');
-            
-            // Update active tab
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            e.target.classList.add('active');
-            
-            // Update active content
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === `${tabId}Tab`) {
-                    content.classList.add('active');
-                }
-            });
-        }
+        updateStats();
+        renderChart();
+        renderHistoryTable();
+    });
+    
+    // Update the displayed risk value
+    function updateRiskValue() {
+        riskValue.textContent = riskLevel.value;
+    }
+    
+    // Switch between tabs
+    function switchTab(e) {
+        const tabId = e.target.getAttribute('data-tab');
         
-        // Generate a new prediction
-        function generatePrediction() {
-            // Show loading state
-            predictionValue.textContent = "...";
-            predictionConfidence.textContent = "Calculating...";
-            predictBtn.disabled = true;
-            
-            // Simulate prediction calculation delay
-            setTimeout(() => {
-                const selectedRisk = parseInt(riskLevel.value);
-                const marketTrend = marketSelect.value;
-                const depth = parseInt(historyDepth.value);
-                
-                // Generate a prediction based on parameters
-                const prediction = calculatePrediction(selectedRisk, marketTrend, depth);
-                
-                // Update the display
-                predictionValue.textContent = `${prediction.color.emoji} ${prediction.color.name}`;
-                predictionValue.style.color = prediction.color.code;
-                predictionConfidence.textContent = `Confidence: ${prediction.confidence}%`;
-                
-                // Animate the prediction display
-                predictionDisplay.style.transform = 'scale(1.05)';
-                predictionDisplay.style.boxShadow = `0 0 20px ${prediction.color.code}80`;
-                setTimeout(() => {
-                    predictionDisplay.style.transform = 'scale(1)';
-                    predictionDisplay.style.boxShadow = 'none';
-                }, 500);
-                
-                // Generate an actual result (simulating what really happens in the market)
-                const actual = generateActualResult(prediction, marketTrend);
-                
-                // Add to history
-                addToHistory(prediction, actual);
-                
-                // Re-enable the button
-                predictBtn.disabled = false;
-            }, 1000);
-        }
+        // Update active tab
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        e.target.classList.add('active');
         
-        // Calculate a prediction based on parameters
-        function calculatePrediction(risk, trend, depth) {
-            // This is a simplified prediction algorithm
-            // In a real app, this would be much more sophisticated
-            
-            let weights = [];
-            
-            // Base weights (equal chance)
-            colors.forEach(color => {
-                weights.push({ color, weight: 1 });
-            });
-            
-            // Adjust based on risk level
-            if (risk > 7) {
-                // High risk favors less common colors
-                weights[0].weight *= 0.8; // Red
-                weights[1].weight *= 0.8; // Green
-                weights[2].weight *= 1.2; // Blue
-                weights[3].weight *= 1.5; // Yellow
-                weights[4].weight *= 1.5; // Purple
-            } else if (risk < 4) {
-                // Low risk favors more common colors
-                weights[0].weight *= 1.5; // Red
-                weights[1].weight *= 1.5; // Green
-                weights[2].weight *= 0.8; // Blue
-                weights[3].weight *= 0.5; // Yellow
-                weights[4].weight *= 0.5; // Purple
+        // Update active content
+        tabContents.forEach(content => {
+            content.classList.remove('active');
+            if (content.id === `${tabId}Tab`) {
+                content.classList.add('active');
             }
-            
-            // Adjust based on market trend
-            switch(trend) {
-                case 'upward':
-                    weights[1].weight *= 1.3; // Favor Green
-                    weights[3].weight *= 1.2; // Favor Yellow
-                    break;
-                case 'downward':
-                    weights[0].weight *= 1.3; // Favor Red
-                    weights[2].weight *= 1.1; // Slightly favor Blue
-                    break;
-                case 'volatile':
-                    weights[0].weight *= 1.5; // Favor Red
-                    weights[3].weight *= 1.5; // Favor Yellow
-                    weights[1].weight *= 0.7; // Reduce Green
-                    break;
-            }
-            
-            // Calculate total weight
-            const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
-            
-            // Generate a random number weighted by our adjustments
-            let random = Math.random() * totalWeight;
-            let selectedColor = colors[0];
-            let sum = 0;
-            
-            for (const item of weights) {
-                sum += item.weight;
-                if (random <= sum) {
-                    selectedColor = item.color;
-                    break;
-                }
-            }
-            
-            // Calculate confidence (simplified)
-            let confidence = 50 + (Math.random() * 30); // Base 50-80%
-            
-            // Adjust confidence based on parameters
-            confidence += (risk - 5) * 2; // Higher risk can increase confidence
-            if (trend === 'random') confidence -= 5;
-            if (depth > 14) confidence += 5;
-            
-            // Ensure confidence is within bounds
-            confidence = Math.max(30, Math.min(95, confidence));
-            
-            return {
-                color: selectedColor,
-                confidence: Math.round(confidence),
-                timestamp: new Date()
-            };
-        }
+        });
+    }
+    
+    // Generate a new prediction
+    function generatePrediction() {
+        // Show loading state
+        predictionValue.textContent = "...";
+        predictionConfidence.textContent = "Calculating...";
+        predictBtn.disabled = true;
         
-        // Generate what actually happens in the market
-        function generateActualResult(prediction, trend) {
-            // Base probability based on prediction confidence
-            let probability = prediction.confidence / 100;
+        // Simulate prediction calculation delay
+        setTimeout(() => {
+            // Generate random number 0-9
+            const randomNum = Math.floor(Math.random() * 10);
             
-            // Adjust based on market trend
-            switch(trend) {
-                case 'upward':
-                    if (prediction.color.name === 'Green') probability += 0.15;
-                    if (prediction.color.name === 'Red') probability -= 0.1;
-                    break;
-                case 'downward':
-                    if (prediction.color.name === 'Red') probability += 0.15;
-                    if (prediction.color.name === 'Green') probability -= 0.1;
-                    break;
-                case 'volatile':
-                    // More random in volatile markets
-                    probability = 0.5 + (Math.random() - 0.5) * 0.3;
-                    break;
+            // Determine prediction based on your rules
+            let predictedColor;
+            if (randomNum === 0) {
+                predictedColor = [colors[1], colors[2]]; // Violet + Red
+            } else if (randomNum === 1) {
+                predictedColor = [colors[0]]; // Green
+            } else if (randomNum === 2) {
+                predictedColor = [colors[2]]; // Red
+            } else if (randomNum === 3) {
+                predictedColor = [colors[0]]; // Green
+            } else if (randomNum === 4) {
+                predictedColor = [colors[2]]; // Red
+            } else if (randomNum === 5) {
+                predictedColor = [colors[0], colors[1]]; // Green + Violet
+            } else if (randomNum === 6) {
+                predictedColor = [colors[2]]; // Red
+            } else if (randomNum === 7) {
+                predictedColor = [colors[0]]; // Green
+            } else if (randomNum === 8) {
+                predictedColor = [colors[2]]; // Red
+            } else if (randomNum === 9) {
+                predictedColor = [colors[0]]; // Green
             }
             
-            // Ensure probability is within bounds
-            probability = Math.max(0.2, Math.min(0.9, probability));
-            
-            // Determine if prediction was correct
-            const isCorrect = Math.random() < probability;
-            
-            // Return the actual color
-            if (isCorrect) {
-                return prediction.color;
+            // Format the prediction display
+            let predictionText, emojiText;
+            if (predictedColor.length === 1) {
+                predictionText = predictedColor[0].name;
+                emojiText = predictedColor[0].emoji;
             } else {
-                // Pick a different color randomly
-                const otherColors = colors.filter(c => c.name !== prediction.color.name);
-                const randomIndex = Math.floor(Math.random() * otherColors.length);
-                return otherColors[randomIndex];
+                predictionText = `${predictedColor[0].name} + ${predictedColor[1].name}`;
+                emojiText = `${predictedColor[0].emoji}${predictedColor[1].emoji}`;
             }
-        }
-        
-        // Add a prediction to history
-        function addToHistory(prediction, actual) {
-            const entry = {
-                date: prediction.timestamp,
-                predicted: prediction.color,
-                actual: actual,
-                confidence: prediction.confidence,
-                isCorrect: prediction.color.name === actual.name
-            };
             
-            tradeHistory.unshift(entry); // Add to beginning of array
-            saveHistory();
-            updateStats();
-            renderChart();
-            renderHistoryTable();
-        }
-        
-        // Generate some initial history
-        function generateInitialHistory() {
-            const now = new Date();
-            const daysAgo = 14;
+            // Generate a confidence value (70-95% for single colors, 50-70% for combined)
+            const confidence = predictedColor.length === 1 
+                ? 70 + Math.floor(Math.random() * 26)
+                : 50 + Math.floor(Math.random() * 21);
             
-            for (let i = daysAgo; i >= 0; i--) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-                
-                // Simple pattern for demo purposes
-                let colorIndex = i % colors.length;
-                if (i > 7) colorIndex = (i + 1) % colors.length;
-                
-                const prediction = {
-                    color: colors[colorIndex],
-                    confidence: 60 + Math.floor(Math.random() * 20),
-                    timestamp: date
-                };
-                
-                // Make it mostly correct but with some variation
-                let actual;
-                if (Math.random() > 0.3) {
-                    actual = prediction.color;
+            // Update the display
+            predictionValue.textContent = `${emojiText} ${predictionText}`;
+            predictionValue.style.color = predictedColor[0].code;
+            predictionConfidence.textContent = `Confidence: ${confidence}%`;
+            
+            // Animate the prediction display
+            predictionDisplay.style.transform = 'scale(1.05)';
+            predictionDisplay.style.boxShadow = `0 0 20px ${predictedColor[0].code}80`;
+            setTimeout(() => {
+                predictionDisplay.style.transform = 'scale(1)';
+                predictionDisplay.style.boxShadow = 'none';
+            }, 500);
+            
+            // Generate an actual result (simulating what really happens in the market)
+            const actual = generateActualResult(predictedColor, confidence, randomNum);
+            
+            // Add to history
+            addToHistory(predictedColor, actual, confidence, randomNum);
+            
+            // Re-enable the button
+            predictBtn.disabled = false;
+        }, 1000);
+    }
+    
+    // Generate what actually happens in the market
+    function generateActualResult(predictedColors, confidence, randomNum) {
+        // For simplicity, we'll make it correct 80% of the time when confidence > 80%
+        // 70% when confidence is 70-80%, and 60% otherwise
+        let probability;
+        if (confidence > 80) probability = 0.8;
+        else if (confidence > 70) probability = 0.7;
+        else probability = 0.6;
+        
+        // Determine if prediction was correct
+        const isCorrect = Math.random() < probability;
+        
+        // Return the actual color
+        if (isCorrect) {
+            // If correct, return one of the predicted colors
+            if (predictedColors.length === 1) {
+                return predictedColors[0];
+            } else {
+                // For combined predictions, randomly pick one
+                return predictedColors[Math.floor(Math.random() * predictedColors.length)];
+            }
+        } else {
+            // If incorrect, pick a color not in the prediction
+            const otherColors = colors.filter(c => !predictedColors.includes(c));
+            const randomIndex = Math.floor(Math.random() * otherColors.length);
+            return otherColors[randomIndex];
+        }
+    }
+    
+    // Add a prediction to history
+    function addToHistory(predictedColors, actual, confidence, randomNum) {
+        const isCorrect = predictedColors.some(c => c.name === actual.name);
+        const predictionText = predictedColors.length === 1 
+            ? predictedColors[0].name 
+            : `${predictedColors[0].name} + ${predictedColors[1].name}`;
+        
+        const entry = {
+            date: new Date(),
+            predicted: predictedColors.length === 1 ? predictedColors[0] : { 
+                name: predictionText,
+                code: predictedColors[0].code,
+                emoji: predictedColors.map(c => c.emoji).join('')
+            },
+            actual: actual,
+            confidence: confidence,
+            isCorrect: isCorrect,
+            randomNumber: randomNum
+        };
+        
+        tradeHistory.unshift(entry); // Add to beginning of array
+        saveHistory();
+        updateStats();
+        renderChart();
+        renderHistoryTable();
+    }
+    
+    // Generate some initial history
+    function generateInitialHistory() {
+        const now = new Date();
+        const daysAgo = 14;
+        
+        for (let i = daysAgo; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            
+            // Generate random number 0-9
+            const randomNum = Math.floor(Math.random() * 10);
+            
+            // Determine prediction based on your rules
+            let predictedColors;
+            if (randomNum === 0) {
+                predictedColors = [colors[1], colors[2]]; // Violet + Red
+            } else if (randomNum === 1) {
+                predictedColors = [colors[0]]; // Green
+            } else if (randomNum === 2) {
+                predictedColors = [colors[2]]; // Red
+            } else if (randomNum === 3) {
+                predictedColors = [colors[0]]; // Green
+            } else if (randomNum === 4) {
+                predictedColors = [colors[2]]; // Red
+            } else if (randomNum === 5) {
+                predictedColors = [colors[0], colors[1]]; // Green + Violet
+            } else if (randomNum === 6) {
+                predictedColors = [colors[2]]; // Red
+            } else if (randomNum === 7) {
+                predictedColors = [colors[0]]; // Green
+            } else if (randomNum === 8) {
+                predictedColors = [colors[2]]; // Red
+            } else if (randomNum === 9) {
+                predictedColors = [colors[0]]; // Green
+            }
+            
+            // Generate a confidence value
+            const confidence = predictedColors.length === 1 
+                ? 70 + Math.floor(Math.random() * 26)
+                : 50 + Math.floor(Math.random() * 21);
+            
+            // Generate actual result
+            const probability = 0.7; // 70% chance of being correct for historical data
+            const isCorrect = Math.random() < probability;
+            let actual;
+            
+            if (isCorrect) {
+                if (predictedColors.length === 1) {
+                    actual = predictedColors[0];
                 } else {
-                    const otherColors = colors.filter(c => c.name !== prediction.color.name);
-                    const randomIndex = Math.floor(Math.random() * otherColors.length);
-                    actual = otherColors[randomIndex];
+                    actual = predictedColors[Math.floor(Math.random() * predictedColors.length)];
                 }
-                
-                tradeHistory.push({
-                    date: date,
-                    predicted: prediction.color,
-                    actual: actual,
-                    confidence: prediction.confidence,
-                    isCorrect: prediction.color.name === actual.name
-                });
+            } else {
+                const otherColors = colors.filter(c => !predictedColors.includes(c));
+                const randomIndex = Math.floor(Math.random() * otherColors.length);
+                actual = otherColors[randomIndex];
             }
             
-            saveHistory();
-        }
-        
-        // Save history to localStorage
-        function saveHistory() {
-            // Only keep the last 30 entries
-            if (tradeHistory.length > 30) {
-                tradeHistory = tradeHistory.slice(0, 30);
-            }
+            const predictionText = predictedColors.length === 1 
+                ? predictedColors[0].name 
+                : `${predictedColors[0].name} + ${predictedColors[1].name}`;
             
-            localStorage.setItem('colorTradingHistory', JSON.stringify(tradeHistory));
+            tradeHistory.push({
+                date: date,
+                predicted: predictedColors.length === 1 ? predictedColors[0] : { 
+                    name: predictionText,
+                    code: predictedColors[0].code,
+                    emoji: predictedColors.map(c => c.emoji).join('')
+                },
+                actual: actual,
+                confidence: confidence,
+                isCorrect: isCorrect,
+                randomNumber: randomNum
+            });
         }
         
-        // Load history from localStorage
-        function loadHistory() {
-            const savedHistory = localStorage.getItem('colorTradingHistory');
-            if (savedHistory) {
-                try {
-                    const parsed = JSON.parse(savedHistory);
-                    // Convert string dates back to Date objects
-                    tradeHistory = parsed.map(item => ({
+        saveHistory();
+    }
+    
+    // Save history to localStorage
+    function saveHistory() {
+        // Only keep the last 30 entries
+        if (tradeHistory.length > 30) {
+            tradeHistory = tradeHistory.slice(0, 30);
+        }
+        
+        localStorage.setItem('colorTradingHistory', JSON.stringify(tradeHistory));
+    }
+    
+    // Load history from localStorage
+    function loadHistory() {
+        const savedHistory = localStorage.getItem('colorTradingHistory');
+        if (savedHistory) {
+            try {
+                const parsed = JSON.parse(savedHistory);
+                // Convert string dates back to Date objects and map colors
+                tradeHistory = parsed.map(item => {
+                    let predicted;
+                    if (item.predicted.name.includes('+')) {
+                        // Combined prediction
+                        const colorNames = item.predicted.name.split(' + ');
+                        const color1 = colors.find(c => c.name === colorNames[0]);
+                        const color2 = colors.find(c => c.name === colorNames[1]);
+                        predicted = {
+                            name: item.predicted.name,
+                            code: color1.code,
+                            emoji: item.predicted.emoji || (color1.emoji + color2.emoji)
+                        };
+                    } else {
+                        predicted = colors.find(c => c.name === item.predicted.name);
+                    }
+                    
+                    return {
                         ...item,
                         date: new Date(item.date),
-                        predicted: colors.find(c => c.name === item.predicted.name),
+                        predicted: predicted,
                         actual: colors.find(c => c.name === item.actual.name)
-                    }));
-                } catch (e) {
-                    console.error('Failed to load history', e);
-                    tradeHistory = [];
-                }
+                    };
+                });
+            } catch (e) {
+                console.error('Failed to load history', e);
+                tradeHistory = [];
             }
         }
+    }
+    
+    // Update statistics display
+    function updateStats() {
+        if (tradeHistory.length === 0) return;
         
-        // Update statistics display
-        function updateStats() {
-            if (tradeHistory.length === 0) return;
-            
-            // Calculate accuracy rate
-            const correctPredictions = tradeHistory.filter(entry => entry.isCorrect).length;
-            const accuracy = (correctPredictions / tradeHistory.length) * 100;
-            accuracyRate.textContent = `${accuracy.toFixed(1)}%`;
-            
-            // Calculate current streak
-            let streak = 0;
-            for (const entry of tradeHistory) {
-                if (entry.isCorrect) {
-                    streak++;
-                } else {
-                    break;
-                }
+        // Calculate accuracy rate
+        const correctPredictions = tradeHistory.filter(entry => entry.isCorrect).length;
+        const accuracy = (correctPredictions / tradeHistory.length) * 100;
+        accuracyRate.textContent = `${accuracy.toFixed(1)}%`;
+        
+        // Calculate current streak
+        let streak = 0;
+        for (const entry of tradeHistory) {
+            if (entry.isCorrect) {
+                streak++;
+            } else {
+                break;
             }
-            successStreak.textContent = streak;
-            
-            // Total predictions
-            totalPredictions.textContent = tradeHistory.length;
         }
+        successStreak.textContent = streak;
         
-        // Render the history chart
-        function renderChart() {
-            // Clear existing chart
-            historyChart.innerHTML = '';
-            
-            // Get the last 10 entries for the chart
-            const displayHistory = tradeHistory.slice(0, 10).reverse();
-            if (displayHistory.length === 0) return;
-            
-            // Calculate maximum value for scaling
-            const maxValue = Math.max(...displayHistory.map(entry => entry.confidence));
-            
-            // Create bars for each entry
-            displayHistory.forEach((entry, index) => {
-                const barHeight = (entry.confidence / maxValue) * 250;
-                const barColor = entry.isCorrect ? '#4CAF50' : '#F44336';
-                
-                const bar = document.createElement('div');
-                bar.className = 'chart-bar';
-                bar.style.height = `${barHeight}px`;
-                bar.style.backgroundColor = barColor;
-                bar.style.left = `${index * 40 + 20}px`;
-                
-                const label = document.createElement('div');
-                label.className = 'chart-label';
-                label.textContent = entry.date.getDate() + '/' + (entry.date.getMonth() + 1);
-                
-                historyChart.appendChild(bar);
-                historyChart.appendChild(label);
-            });
-        }
+        // Total predictions
+        totalPredictions.textContent = tradeHistory.length;
+    }
+    
+    // Render the history chart
+    function renderChart() {
+        // Clear existing chart
+        historyChart.innerHTML = '';
         
-        // Render the history table
-        function renderHistoryTable() {
-            // Clear existing rows
-            historyTableBody.innerHTML = '';
+        // Get the last 10 entries for the chart
+        const displayHistory = tradeHistory.slice(0, 10).reverse();
+        if (displayHistory.length === 0) return;
+        
+        // Calculate maximum value for scaling
+        const maxValue = Math.max(...displayHistory.map(entry => entry.confidence));
+        
+        // Create bars for each entry
+        displayHistory.forEach((entry, index) => {
+            const barHeight = (entry.confidence / maxValue) * 250;
+            const barColor = entry.isCorrect ? '#4CAF50' : '#F44336';
             
-            // Add rows for each history entry
-            tradeHistory.forEach(entry => {
-                const row = document.createElement('tr');
-                
-                // Format date
-                const dateStr = entry.date.toLocaleDateString() + ' ' + entry.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                // Format result
-                const resultClass = entry.isCorrect ? 'profit' : 'loss';
-                const resultText = entry.isCorrect ? 'Correct' : 'Incorrect';
-                
-                row.innerHTML = `
-                    <td>${dateStr}</td>
-                    <td style="color: ${entry.predicted.code}">${entry.predicted.emoji} ${entry.predicted.name}</td>
-                    <td style="color: ${entry.actual.code}">${entry.actual.emoji} ${entry.actual.name}</td>
-                    <td class="${resultClass}">${resultText}</td>
-                    <td>${entry.confidence}%</td>
-                `;
-                
-                historyTableBody.appendChild(row);
-            });
-        }
-    </script>
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            bar.style.height = `${barHeight}px`;
+            bar.style.backgroundColor = barColor;
+            bar.style.left = `${index * 40 + 20}px`;
+            
+            const label = document.createElement('div');
+            label.className = 'chart-label';
+            label.textContent = entry.date.getDate() + '/' + (entry.date.getMonth() + 1);
+            
+            historyChart.appendChild(bar);
+            historyChart.appendChild(label);
+        });
+    }
+    
+    // Render the history table
+    function renderHistoryTable() {
+        // Clear existing rows
+        historyTableBody.innerHTML = '';
+        
+        // Add rows for each history entry
+        tradeHistory.forEach(entry => {
+            const row = document.createElement('tr');
+            
+            // Format date
+            const dateStr = entry.date.toLocaleDateString() + ' ' + entry.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Format result
+            const resultClass = entry.isCorrect ? 'profit' : 'loss';
+            const resultText = entry.isCorrect ? 'Correct' : 'Incorrect';
+            
+            row.innerHTML = `
+                <td>${dateStr}</td>
+                <td style="color: ${entry.predicted.code}">${entry.predicted.emoji || ''} ${entry.predicted.name}</td>
+                <td style="color: ${entry.actual.code}">${entry.actual.emoji} ${entry.actual.name}</td>
+                <td class="${resultClass}">${resultText}</td>
+                <td>${entry.confidence}%</td>
+                <td>${entry.randomNumber !== undefined ? entry.randomNumber : '-'}</td>
+            `;
+            
+            historyTableBody.appendChild(row);
+        });
+    }
+</script>
 </body>
 </html>
